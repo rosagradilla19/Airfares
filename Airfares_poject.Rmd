@@ -10,6 +10,7 @@ library(dplyr)
 library(readr)
 library(GGally)
 library(car)
+library(ggfortify)
 ```
 
 ## Read the data
@@ -40,7 +41,7 @@ corrplot(cordata, method='number')
 
 What variables play a significant role in determining a flight's fare. Response variable is flight fare.
 
-$fare_i=coupon_i+new_i+D_{vacation,i}+HI_i+s.income_i+e.income_i+s.pop_i+e.pop_i+distance_i+pax_i+\varepsilon_i, \varepsilon_i\sim_{i.i.d}(0,\sigma^2)$
+$fare_i=\beta_0+\beta_1coupon_i+\beta_2new_i+\beta_3D_{vacation,i}+\beta_4HI_i+\beta_5s.income_i+\beta_6e.income_i+\beta_7s.pop_i+\beta_8e.pop_i+\beta_9distance_i+\beta_{10}pax_i+\varepsilon_i, \varepsilon_i\sim_{i.i.d}(0,\sigma^2)$
 
 ```{r}
 # fitting model to all predictors
@@ -63,7 +64,50 @@ mlr2 <- lm(FARE ~ COUPON + VACATION + HI + S_INCOME + E_INCOME + S_POP + E_POP +
 summary(mlr2) 
 ```
 
-$fare_i=coupon_i+D_{vacation,i}+HI_i+s.income_i+e.income_i+s.pop_i+e.pop_i+distance_i+pax_i+\varepsilon_i, \varepsilon_i\sim_{i.i.d}(0,\sigma^2)$
+$fare_i=\beta_0+\beta_1coupon_i+\beta_2D_{vacation,i}+\beta_3HI_i+\beta_4s.income_i+\beta_5e.income_i+\beta_6s.pop_i+\beta_7e.pop_i+\beta_8distance_i+\beta_{9}pax_i+\varepsilon_i, \varepsilon_i\sim_{i.i.d}(0,\sigma^2)$
+
+F-test: $H_0: \beta_1=\beta_2=\beta_3=\beta_4=\beta_5=\beta_6=\beta_7=\beta_8=\beta_9=0$
+
+```{r}
+confint(mlr2)
+```
+
+### Model Diagnostics
+
+```{r}
+mlr3 <- lm(log(FARE) ~ COUPON + VACATION + HI + S_INCOME + E_INCOME + S_POP + E_POP + DISTANCE + PAX + S_INCOME:S_POP + DISTANCE:COUPON + I(PAX^2), data=airfares)
+plot(mlr3, which = 1)
+```
+
+```{r}
+plot(airfares$FARE ~ airfares$COUPON)
+plot(airfares$FARE ~ airfares$HI)
+plot(airfares$FARE ~ airfares$S_INCOME)
+plot(airfares$FARE ~ airfares$S_POP)
+plot(airfares$FARE ~ airfares$DISTANCE)
+plot(airfares$FARE ~ airfares$PAX)
+```
+
+
+```{r}
+autoplot(mlr3, which = 1) + theme_classic()
+```
+
+
+Added terms :
+$s.income*s.pop\\distance*coupon\\pax^2$
+
+$fare_i=\beta_0+\beta_1coupon_i+\beta_2D_{vacation,i}+\beta_3HI_i+\beta_4s.income_i+\beta_5e.income_i+\beta_6s.pop_i\\+\beta_7e.pop_i+\beta_8distance_i+\beta_{9}pax_i+\beta_{10}(s.income_i*s.pop_i)\\+\beta_{11}(distance_i*coupon_i)+\beta_{12}pax_i^2+\varepsilon_i, \varepsilon_i\sim_{i.i.d}(0,\sigma^2)$
+
+$H_0: \beta_{10}=\beta_{11}=\beta_{12}=0$
+
+$H_a:$
+
+Comparing two models:
+```{r}
+mlr4 <- lm(FARE ~ COUPON + VACATION + HI + S_INCOME + E_INCOME + S_POP + E_POP + DISTANCE + PAX + S_INCOME:S_POP + DISTANCE:COUPON + I(PAX^2), data=airfares)
+anova(mlr2, mlr4)
+```
 
 
 
