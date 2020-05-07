@@ -9,6 +9,7 @@ output: html_notebook
 library(dplyr)
 library(readr)
 library(GGally)
+library(car)
 ```
 
 ## Read the data
@@ -27,10 +28,42 @@ p <- ggpairs(airfares.num,
             )
 p
 ```
+
+
 ```{r}
 library(corrplot)
 cordata <- cor(airfares.num)
 corrplot(cordata, method='number')
 ```
+
+# Multiple Linear Regression
+
+What variables play a significant role in determining a flight's fare. Response variable is flight fare.
+
+$fare_i=coupon_i+new_i+D_{vacation,i}+HI_i+s.income_i+e.income_i+s.pop_i+e.pop_i+distance_i+pax_i+\varepsilon_i, \varepsilon_i\sim_{i.i.d}(0,\sigma^2)$
+
+```{r}
+# fitting model to all predictors
+mlr <- lm(FARE ~ COUPON + NEW + VACATION + HI + S_INCOME + E_INCOME + S_POP + E_POP + DISTANCE + PAX, data=airfares)
+summary(mlr)
+```
+
+```{r}
+# check for collinearity
+vif(mlr)
+```
+
+```{r}
+# variable selection
+step(mlr)
+```
+
+```{r}
+mlr2 <- lm(FARE ~ COUPON + VACATION + HI + S_INCOME + E_INCOME + S_POP + E_POP + DISTANCE + PAX, data=airfares)
+summary(mlr2) 
+```
+
+$fare_i=coupon_i+D_{vacation,i}+HI_i+s.income_i+e.income_i+s.pop_i+e.pop_i+distance_i+pax_i+\varepsilon_i, \varepsilon_i\sim_{i.i.d}(0,\sigma^2)$
+
 
 
