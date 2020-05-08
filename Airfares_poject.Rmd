@@ -152,11 +152,52 @@ $vacation_i \sim_{indep.}Bin(1,p_i)\\log(\frac{p_i}{1-p_i})=\beta_0+\beta_1fare_
 
 ```{r}
 airfares1 <- airfares %>% mutate(VACATION=ifelse(VACATION=="Yes", 1, 0))
-glm1 <- glm(VACATION ~ FARE +COUPON+ NEW+ HI+ S_INCOME+ E_INCOME+ S_POP+ E_POP+ DISTANCE+ PAX, family = binomial, maxit=100, data=airfares1)
+glm1 <- glm(VACATION ~ FARE +COUPON+ NEW+ HI+ S_INCOME+ E_INCOME+ S_POP+ E_POP+ DISTANCE+ PAX, family = binomial, data=airfares1)
 summary(glm1)
 ```
 
+```{r}
+# checking for model significance
+glm.null <- glm(VACATION ~ 1, data=airfares1, family = "binomial")
+anova(glm.null, glm1, test = "LRT")
+```
+
+$H_0: \beta_1=\beta_2=\beta_3=\beta_4=\beta_5=\beta_6=\beta_7=\beta_8=\beta_9=\beta_{10}=0$
 
 
+```{r}
+# checking for collinearity
+vif(glm1)
+```
 
+```{r}
+glm2 <- glm(VACATION ~ FARE +COUPON+ NEW+ HI+ S_INCOME+ E_INCOME+ S_POP+ E_POP+ PAX, family = binomial, data=airfares1)
+vif(glm2)
+```
+
+```{r}
+# variable selection
+step(glm2)
+```
+
+$log(\frac{p_i}{1-p_i})=\beta_0+\beta_1fare_i+\beta_2coupon_i+\beta_3HI_i+\beta_4s.income_i+\beta_5s.pop_i+\beta_6e.pop_i+\beta_7pax_i$
+
+```{r}
+# checking model significance for the new model
+glm3 <- glm(VACATION ~ FARE +COUPON+ HI+ S_INCOME+ S_POP+ E_POP+ PAX, family = binomial, data=airfares1)
+anova(glm.null, glm3, test = "LRT")
+```
+
+```{r}
+summary(glm3)
+```
+
+```{r}
+exp(glm3$coefficients)
+exp(1000*4.105e-05)
+```
+
+```{r}
+exp(confint(glm3))
+```
 
