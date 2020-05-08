@@ -11,6 +11,7 @@ library(readr)
 library(GGally)
 library(car)
 library(ggfortify)
+library(forcats)
 ```
 
 ## Read the data
@@ -108,6 +109,54 @@ Comparing two models:
 mlr4 <- lm(FARE ~ COUPON + VACATION + HI + S_INCOME + E_INCOME + S_POP + E_POP + DISTANCE + PAX + S_INCOME:S_POP + DISTANCE:COUPON + I(PAX^2), data=airfares)
 anova(mlr2, mlr4)
 ```
+
+
+### Outliers
+
+```{r}
+par(mfrow=c(1,2))
+plot(mlr3, which = 3)
+plot(rstandard(mlr3))
+text(x=1:nrow(airfares), y=rstandard(mlr3), rownames(airfares), cex = 0.6, pos=4, col = "blue")
+```
+
+```{r}
+# high leverage values 
+plot(hatvalues(mlr3))
+text(x=1:nrow(airfares), y=hatvalues(mlr3), rownames(airfares), cex = 0.6, pos=4, col = "blue")
+```
+
+```{r}
+# influential observations
+plot(mlr3, which = 4)
+```
+
+```{r}
+summary(mlr3)
+mlr3.no.outlier <- lm(log(FARE) ~ COUPON + VACATION + HI + S_INCOME + E_INCOME + S_POP + E_POP + DISTANCE + PAX + S_INCOME:S_POP + DISTANCE:COUPON + I(PAX^2), data=airfares, subset=-c(497, 526))
+summary(mlr3.no.outlier)
+```
+
+```{r}
+outliers <- airfares %>% select(FARE, S_CITY, E_CITY, COUPON, VACATION, S_INCOME, E_INCOME, DISTANCE, PAX)
+outliers[c(497,526),]
+```
+
+### Logistic Regression
+
+$p_i=P(vacation_i=1 | fare_i, coupon_i,new_i,HI_i, s.income_i, e.income_i, s.pop_i, e.pop_i, distance_i, pax_i)$
+
+then
+
+$vacation_i \sim_{indep.}Bin(1,p_i)\\log(\frac{p_i}{1-p_i})=\beta_0+\beta_1fare_i+\beta_2coupon_i+\beta_3new_i+\beta_4HI_i+\beta_5s.income_i+\beta_6e.income_i+\beta_7s.pop_i+\beta_8e.pop_i+\beta_9distance_i+\beta_{10}pax_i$
+
+```{r}
+airfares1 <- airfares %>% mutate(VACATION=ifelse(VACATION=="Yes", 1, 0))
+glm1 <- glm(VACATION ~ FARE +COUPON+ NEW+ HI+ S_INCOME+ E_INCOME+ S_POP+ E_POP+ DISTANCE+ PAX, family = binomial, maxit=100, data=airfares1)
+summary(glm1)
+```
+
+
 
 
 
